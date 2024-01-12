@@ -11,6 +11,8 @@ module Data.PSQ.Class
     ( PSQ (..)
     , pattern Empty
     , pattern (::<|)
+    , FromList
+    , FromListOn
     ) where
 
 import           Data.Hashable (Hashable)
@@ -23,6 +25,9 @@ import qualified Data.OrdPSQ   as OrdPSQ
 -- | Converts a curried function to a function on a triple.
 uncurry3 :: (a -> b -> c -> d) -> ((a, b, c) -> d)
 uncurry3 f ~(a, b, c) = f a b c
+
+type FromList psq p v = [(Key psq, p, v)] -> psq p v
+type FromListOn psq p v = (v -> Key psq) -> (v -> p) -> [v] -> psq p v
 
 class PSQ (psq :: * -> * -> *) where
     type Key psq :: *
@@ -98,9 +103,9 @@ class PSQ (psq :: * -> * -> *) where
 
     -- Lists
     fromList
-        :: Ord p => [(Key psq, p, v)] -> psq p v
+        :: Ord p => FromList psq p v
     fromListOn
-        :: Ord p => (v -> Key psq) -> (v -> p) -> [v] -> psq p v
+        :: Ord p => FromListOn psq p v
     fromListOn k p vs = fromList $ (\v -> (k v, p v, v)) <$> vs
 
     toList
