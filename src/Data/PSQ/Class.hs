@@ -4,15 +4,25 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE Rank2Types          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE PatternSynonyms     #-}
 module Data.PSQ.Class
     ( PSQ (..)
+    , pattern Empty
+    , pattern (::<|)
     ) where
 
 import           Data.Hashable (Hashable)
 
+import           Data.Foldable (foldr')
 import qualified Data.IntPSQ   as IntPSQ
 import qualified Data.HashPSQ  as HashPSQ
 import qualified Data.OrdPSQ   as OrdPSQ
+
+-- | Converts a curried function to a function on a triple.
+uncurry3 :: (a -> b -> c -> d) -> ((a, b, c) -> d)
+uncurry3 f ~(a, b, c) = f a b c
 
 class PSQ (psq :: * -> * -> *) where
     type Key psq :: *
@@ -38,6 +48,23 @@ class PSQ (psq :: * -> * -> *) where
     -- Insertion
     insert
         :: Ord p => Key psq -> p -> v -> psq p v -> psq p v
+
+    -- | Insertion on missing
+    insertOnMissing
+        :: Ord p => Key psq -> p -> v -> psq p v -> psq p v
+    insertOnMissing k p v q
+      | k `member` q = q
+      | otherwise = insert k p v q
+
+    -- | Insert multiple
+    inserts
+        :: (Foldable t, Ord p) => psq p v -> t (Key psq, p, v) -> psq p v
+    inserts = foldr' $ uncurry3 insert
+
+    -- | Insert multiple on missing
+    insertsOnMissing
+        :: (Foldable t, Ord p) => psq p v -> t (Key psq, p, v) -> psq p v
+    insertsOnMissing = foldr' $ uncurry3 insertOnMissing
 
     -- Delete/update
     delete
@@ -70,6 +97,10 @@ class PSQ (psq :: * -> * -> *) where
         :: Ord p => psq p v -> Maybe (Key psq, p, v, psq p v)
     atMostView
         :: Ord p => p -> psq p v -> ([(Key psq, p, v)], psq p v)
+
+    minView'
+        :: Ord p => psq p v -> Maybe ((Key psq, p, v), psq p v)
+    minView' q = (\(k, p, v, q') -> ((k, p, v), q')) <$> minView q
 
     -- Traversals
     map :: Ord p => (Key psq -> p -> v -> w) -> psq p v -> psq p w
@@ -162,3 +193,17 @@ instance forall k. (Hashable k, Ord k) => PSQ (HashPSQ.HashPSQ k) where
     unsafeMapMonotonic = HashPSQ.unsafeMapMonotonic
     fold'              = HashPSQ.fold'
     valid              = HashPSQ.valid
+
+-- Patterns
+pattern Empty :: (Ord p, PSQ psq) => psq p v
+pattern Empty <- (minView' -> Nothing)
+
+pattern (::<|) :: (Ord p, PSQ psq) => (Key psq, p, v) -> psq p v -> psq p v
+pattern item ::<| q <- (minView' -> Just (item, q))
+  where
+    (k, p, v) ::<| q = insert k p v q
+
+{-# COMPLETE Empty, (::<|) :: IntPSQ.IntPSQ #-}
+{-# COMPLETE Empty, (::<|) :: OrdPSQ.OrdPSQ #-}
+{-# COMPLETE Empty, (::<|) :: HashPSQ.HashPSQ #-}
+
