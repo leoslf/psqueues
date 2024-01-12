@@ -26,8 +26,8 @@ import qualified Data.OrdPSQ   as OrdPSQ
 uncurry3 :: (a -> b -> c -> d) -> ((a, b, c) -> d)
 uncurry3 f ~(a, b, c) = f a b c
 
-type FromList psq p v = [(Key psq, p, v)] -> psq p v
-type FromListOn psq p v = (v -> Key psq) -> (v -> p) -> [v] -> psq p v
+type FromList (psq :: * -> * -> *) = forall p v. Ord p => [(Key psq, p, v)] -> psq p v
+type FromListOn (psq :: * -> * -> *)  = forall p v. Ord p => (v -> Key psq) -> (v -> p) -> [v] -> psq p v
 
 class PSQ (psq :: * -> * -> *) where
     type Key psq :: *
@@ -103,9 +103,9 @@ class PSQ (psq :: * -> * -> *) where
 
     -- Lists
     fromList
-        :: Ord p => FromList psq p v
+        :: FromList psq
     fromListOn
-        :: Ord p => FromListOn psq p v
+        :: FromListOn psq
     fromListOn k p vs = fromList $ (\v -> (k v, p v, v)) <$> vs
 
     toList
