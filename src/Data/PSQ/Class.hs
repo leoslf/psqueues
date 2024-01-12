@@ -49,22 +49,38 @@ class PSQ (psq :: * -> * -> *) where
     insert
         :: Ord p => Key psq -> p -> v -> psq p v -> psq p v
 
+    insertOn
+        :: Ord p => (v -> Key psq) -> (v -> p) -> v -> psq p v -> psq p v
+    insertOn k p v = insert (k v) (p v) v
+
     -- | Insertion on missing
-    insertOnMissing
+    insertWhenMissing
         :: Ord p => Key psq -> p -> v -> psq p v -> psq p v
-    insertOnMissing k p v q
+    insertWhenMissing k p v q
       | k `member` q = q
       | otherwise = insert k p v q
 
+    insertOnWhenMissing
+        :: Ord p => (v -> Key psq) -> (v -> p) -> v -> psq p v -> psq p v
+    insertOnWhenMissing k p v = insertWhenMissing (k v) (p v) v
+
     -- | Insert multiple
     inserts
-        :: (Foldable t, Ord p) => psq p v -> t (Key psq, p, v) -> psq p v
-    inserts = foldr' $ uncurry3 insert
+        :: (Foldable t, Ord p) => t (Key psq, p, v) -> psq p v -> psq p v
+    inserts = flip $ foldr' (uncurry3 insert)
+
+    insertsOn
+        :: (Traversable t, Ord p) => (v -> Key psq) -> (v -> p) -> t v -> psq p v -> psq p v
+    insertsOn k p vs = inserts ((\v -> (k v, p v, v)) <$> vs)
 
     -- | Insert multiple on missing
-    insertsOnMissing
-        :: (Foldable t, Ord p) => psq p v -> t (Key psq, p, v) -> psq p v
-    insertsOnMissing = foldr' $ uncurry3 insertOnMissing
+    insertsWhenMissing
+        :: (Foldable t, Ord p) => t (Key psq, p, v) -> psq p v -> psq p v
+    insertsWhenMissing = flip $ foldr' (uncurry3 insertWhenMissing)
+
+    insertsOnWhenMissing
+        :: (Traversable t, Ord p) => (v -> Key psq) -> (v -> p) -> t v -> psq p v -> psq p v
+    insertsOnWhenMissing k p vs = insertsWhenMissing ((\v -> (k v, p v, v)) <$> vs)
 
     -- Delete/update
     delete
@@ -83,6 +99,10 @@ class PSQ (psq :: * -> * -> *) where
     -- Lists
     fromList
         :: Ord p => [(Key psq, p, v)] -> psq p v
+    fromListOn
+        :: Ord p => (v -> Key psq) -> (v -> p) -> [v] -> psq p v
+    fromListOn k p vs = fromList $ (\v -> (k v, p v, v)) <$> vs
+
     toList
         :: Ord p => psq p v -> [(Key psq, p, v)]
     keys
