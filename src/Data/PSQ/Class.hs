@@ -7,6 +7,7 @@
 {-# LANGUAGE TupleSections       #-}
 {-# LANGUAGE ViewPatterns        #-}
 {-# LANGUAGE PatternSynonyms     #-}
+{-# LANGUAGE BlockArguments      #-}
 module Data.PSQ.Class
     ( PSQ (..)
     , pattern Empty
@@ -15,6 +16,7 @@ module Data.PSQ.Class
     , FromListOn
     ) where
 
+import           Data.Maybe (Maybe(..), maybe)
 import           Data.Hashable (Hashable)
 
 import           Data.Foldable (foldr')
@@ -53,39 +55,13 @@ class PSQ (psq :: * -> * -> *) where
     -- Insertion
     insert
         :: Ord p => Key psq -> p -> v -> psq p v -> psq p v
-
-    insertOn
-        :: Ord p => (v -> Key psq) -> (v -> p) -> v -> psq p v -> psq p v
-    insertOn k p v = insert (k v) (p v) v
-
-    -- | Insertion on missing
-    insertWhenMissing
-        :: Ord p => Key psq -> p -> v -> psq p v -> psq p v
-    insertWhenMissing k p v q
-      | k `member` q = q
-      | otherwise = insert k p v q
-
-    insertOnWhenMissing
-        :: Ord p => (v -> Key psq) -> (v -> p) -> v -> psq p v -> psq p v
-    insertOnWhenMissing k p v = insertWhenMissing (k v) (p v) v
-
-    -- | Insert multiple
-    inserts
-        :: (Foldable t, Ord p) => t (Key psq, p, v) -> psq p v -> psq p v
-    inserts = flip $ foldr' (uncurry3 insert)
-
-    insertsOn
-        :: (Traversable t, Ord p) => (v -> Key psq) -> (v -> p) -> t v -> psq p v -> psq p v
-    insertsOn k p vs = inserts ((\v -> (k v, p v, v)) <$> vs)
-
-    -- | Insert multiple on missing
-    insertsWhenMissing
-        :: (Foldable t, Ord p) => t (Key psq, p, v) -> psq p v -> psq p v
-    insertsWhenMissing = flip $ foldr' (uncurry3 insertWhenMissing)
-
-    insertsOnWhenMissing
-        :: (Traversable t, Ord p) => (v -> Key psq) -> (v -> p) -> t v -> psq p v -> psq p v
-    insertsOnWhenMissing k p vs = insertsWhenMissing ((\v -> (k v, p v, v)) <$> vs)
+    insertWith
+        :: Ord p => ((p, v) -> (p, v) -> (p, v)) -> Key psq -> p -> v -> psq p v -> psq p v
+    insertWith f = insertWithKey (const f)
+    insertWithKey
+        :: Ord p => (Key psq -> (p, v) -> (p, v) -> (p, v)) -> Key psq -> p -> v -> psq p v -> psq p v
+    insertWithKey f k p v psq = let f' = ((),) . Just . maybe (p, v) \(p', v') -> f k (p', v') (p, v)
+                                 in snd $ alter f' k psq
 
     -- Delete/update
     delete
@@ -175,7 +151,6 @@ instance forall k. Ord k => PSQ (OrdPSQ.OrdPSQ k) where
     findMin            = OrdPSQ.findMin
     empty              = OrdPSQ.empty
     singleton          = OrdPSQ.singleton
-    insert             = OrdPSQ.insert
     delete             = OrdPSQ.delete
     deleteMin          = OrdPSQ.deleteMin
     alter              = OrdPSQ.alter
