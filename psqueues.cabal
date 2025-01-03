@@ -77,14 +77,14 @@ source-repository head
 library
   exposed-modules:
       Data.BitUtil
+      Data.PSQ
+      Data.PSQ.Class
       Data.HashPSQ
       Data.HashPSQ.Internal
       Data.IntPSQ
       Data.IntPSQ.Internal
       Data.OrdPSQ
       Data.OrdPSQ.Internal
-      Data.PSQ
-      Data.PSQ.Class
   other-modules:
       Paths_psqueues
   hs-source-dirs:

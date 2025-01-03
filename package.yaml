@@ -76,11 +76,16 @@ library:
   - -Wall
   source-dirs:
   - src
-  # exposed-modules:
-  # - Data.PSQ.Class
-  # - Data.HashPSQ
-  # - Data.IntPSQ
-  # - Data.OrdPSQ
+  exposed-modules:
+  - Data.BitUtil
+  - Data.PSQ
+  - Data.PSQ.Class
+  - Data.HashPSQ
+  - Data.HashPSQ.Internal
+  - Data.IntPSQ
+  - Data.IntPSQ.Internal
+  - Data.OrdPSQ
+  - Data.OrdPSQ.Internal
   dependencies:
   - base >= 4.2 && < 5
   - deepseq >= 1.2 && < 1.6
