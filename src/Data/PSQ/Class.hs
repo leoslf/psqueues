@@ -56,8 +56,7 @@ class PSQ (psq :: Type -> Type -> Type) where
     insertWith f = insertWithKey (const f)
     insertWithKey
         :: Ord p => (Key psq -> (p, v) -> (p, v) -> (p, v)) -> Key psq -> p -> v -> psq p v -> psq p v
-    insertWithKey f k p v psq = let f' = ((),) . Just . maybe (p, v) \(p', v') -> f k (p', v') (p, v)
-                                 in snd $ alter f' k psq
+    insertWithKey f k p v = snd . alter (((),) . Just . maybe (p, v) \(p', v') -> f k (p', v') (p, v)) k
 
     -- Delete/update
     delete
