@@ -265,7 +265,7 @@ prop_insertDelete = Tagged $ \t ->
     forAll arbitraryPriority $ \p ->
     forAll arbitrary         $ \c ->
         (lookup k t == Nothing) ==>
-            (delete k (insert k p c t) == (t :: psq Int Char))
+            (delete k (insertWith (const id) k p c t) == (t :: psq Int Char))
 
 prop_insertDeleteView
     :: forall psq. (PSQ psq, TestKey (Key psq),
