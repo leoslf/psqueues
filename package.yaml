@@ -1,5 +1,5 @@
 name:                psqueues
-version:             0.2.8.0
+version:             0.2.9.0
 license:             BSD3
 license-file:        LICENSE
 maintainer:          "Jasper Van der Jeugt <jaspervdj@gmail.com>"
@@ -101,7 +101,7 @@ benchmarks:
     - Paths_psqueues
     dependencies:
     - psqueues
-    - containers >= 0.5 
+    - containers >= 0.5
     - unordered-containers >= 0.2.4
     - criterion >= 0.8
     - mtl >= 2.1
