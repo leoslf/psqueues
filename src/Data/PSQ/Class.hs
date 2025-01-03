@@ -86,6 +86,12 @@ class PSQ (psq :: * -> * -> *) where
 
     toList
         :: Ord p => psq p v -> [(Key psq, p, v)]
+    toAscList
+        :: Ord p => psq p v -> [(Key psq, p, v)]
+    toAscList psq = case minView psq of
+        Nothing -> []
+        Just (k, p, v, psq') -> (k, p, v):toAscList psq'
+
     keys
         :: Ord p => psq p v -> [Key psq]
 
