@@ -16,23 +16,19 @@ module Data.PSQ.Class
     , FromListOn
     ) where
 
+import           Data.Kind (Type)
 import           Data.Maybe (Maybe(..), maybe)
 import           Data.Hashable (Hashable)
 
-import           Data.Foldable (foldr')
 import qualified Data.IntPSQ   as IntPSQ
 import qualified Data.HashPSQ  as HashPSQ
 import qualified Data.OrdPSQ   as OrdPSQ
 
--- | Converts a curried function to a function on a triple.
-uncurry3 :: (a -> b -> c -> d) -> ((a, b, c) -> d)
-uncurry3 f ~(a, b, c) = f a b c
+type FromList (psq :: Type -> Type -> Type) = forall p v. Ord p => [(Key psq, p, v)] -> psq p v
+type FromListOn (psq :: Type -> Type -> Type)  = forall p v. Ord p => (v -> Key psq) -> (v -> p) -> [v] -> psq p v
 
-type FromList (psq :: * -> * -> *) = forall p v. Ord p => [(Key psq, p, v)] -> psq p v
-type FromListOn (psq :: * -> * -> *)  = forall p v. Ord p => (v -> Key psq) -> (v -> p) -> [v] -> psq p v
-
-class PSQ (psq :: * -> * -> *) where
-    type Key psq :: *
+class PSQ (psq :: Type -> Type -> Type) where
+    type Key psq :: Type
 
     -- Query
     null
@@ -86,12 +82,6 @@ class PSQ (psq :: * -> * -> *) where
 
     toList
         :: Ord p => psq p v -> [(Key psq, p, v)]
-    toAscList
-        :: Ord p => psq p v -> [(Key psq, p, v)]
-    toAscList psq = case minView psq of
-        Nothing -> []
-        Just (k, p, v, psq') -> (k, p, v):toAscList psq'
-
     keys
         :: Ord p => psq p v -> [Key psq]
 
@@ -157,6 +147,7 @@ instance forall k. Ord k => PSQ (OrdPSQ.OrdPSQ k) where
     findMin            = OrdPSQ.findMin
     empty              = OrdPSQ.empty
     singleton          = OrdPSQ.singleton
+    insert             = OrdPSQ.insert
     delete             = OrdPSQ.delete
     deleteMin          = OrdPSQ.deleteMin
     alter              = OrdPSQ.alter
