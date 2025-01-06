@@ -1,5 +1,5 @@
 name:                psqueues
-version:             0.2.8.0
+version:             0.2.8.1
 license:             BSD3
 license-file:        LICENSE
 maintainer:          "Jasper Van der Jeugt <jaspervdj@gmail.com>"

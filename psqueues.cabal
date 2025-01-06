@@ -5,7 +5,7 @@ cabal-version: >=1.10
 -- see: https://github.com/sol/hpack
 
 name:           psqueues
-version:        0.2.8.0
+version:        0.2.8.1
 synopsis:       Pure priority search queues
 description:    The psqueues package provides
                 <http://en.wikipedia.org/wiki/Priority_queue Priority Search Queues> in
